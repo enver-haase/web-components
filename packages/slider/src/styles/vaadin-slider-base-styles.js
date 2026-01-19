@@ -8,15 +8,13 @@ import { css } from 'lit';
 
 export const sliderStyles = css`
   :host {
-    display: inline-flex;
-    align-items: center;
+    display: inline-grid;
     box-sizing: border-box;
-    position: relative;
     width: 100%;
     height: var(--_thumb-size);
     user-select: none;
     -webkit-user-select: none;
-    border-radius: var(--vaadin-slider-track-border-radius, var(--vaadin-radius-m));
+    --_track-radius: var(--vaadin-slider-track-border-radius, var(--vaadin-radius-m));
     --_thumb-size: var(--vaadin-slider-thumb-size, 1lh);
     --_track-size: var(--vaadin-slider-track-size, 0.25lh);
   }
@@ -38,13 +36,26 @@ export const sliderStyles = css`
     --vaadin-slider-fill-background: var(--vaadin-background-color);
   }
 
+  #track {
+    box-sizing: border-box;
+    min-width: 100%;
+    height: var(--_thumb-size);
+    padding-inline: calc(var(--_thumb-size) / 2);
+  }
+
+  #controls {
+    position: relative;
+    display: grid;
+    grid-template-rows: var(--_thumb-size);
+  }
+
   [part='track'] {
     box-sizing: border-box;
-    position: absolute;
     height: var(--_track-size);
-    width: 100%;
     background: var(--vaadin-slider-track-background, var(--vaadin-background-container));
-    border-radius: inherit;
+    border-radius: var(--_track-radius);
+    align-self: center;
+    pointer-events: none;
   }
 
   [part='track-fill'] {
@@ -54,6 +65,7 @@ export const sliderStyles = css`
     background: var(--vaadin-slider-fill-background, var(--vaadin-text-color));
     border-start-start-radius: inherit;
     border-end-start-radius: inherit;
+    pointer-events: none;
   }
 
   [part~='thumb'] {

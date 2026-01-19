@@ -45,6 +45,11 @@ class RangeSlider extends SliderMixin(
     return [
       sliderStyles,
       css`
+        [part='track'] {
+          width: calc(100% + var(--_thumb-size));
+          margin-inline-start: calc(var(--_thumb-size) / 2 * -1);
+        }
+
         :host([focus-ring][start-focused]) [part~='thumb-start'],
         :host([focus-ring][end-focused]) [part~='thumb-end'] {
           outline: var(--vaadin-focus-ring-width) var(--_outline-style, solid) var(--vaadin-focus-ring-color);
@@ -84,18 +89,22 @@ class RangeSlider extends SliderMixin(
     const endPercent = this.__getPercentFromValue(endValue);
 
     return html`
-      <div part="track">
-        <div
-          part="track-fill"
-          style="${styleMap({
-            insetInlineStart: `${startPercent}%`,
-            insetInlineEnd: `${100 - endPercent}%`,
-          })}"
-        ></div>
+      <div id="track">
+        <div id="controls">
+          <div part="track">
+            <div
+              part="track-fill"
+              style="${styleMap({
+                insetInlineStart: `${startPercent}%`,
+                insetInlineEnd: `${100 - endPercent}%`,
+              })}"
+            ></div>
+          </div>
+          <div part="thumb thumb-start" style="${styleMap({ insetInlineStart: `${startPercent}%` })}"></div>
+          <div part="thumb thumb-end" style="${styleMap({ insetInlineStart: `${endPercent}%` })}"></div>
+        </div>
+        <slot name="input"></slot>
       </div>
-      <div part="thumb thumb-start" style="${styleMap({ insetInlineStart: `${startPercent}%` })}"></div>
-      <div part="thumb thumb-end" style="${styleMap({ insetInlineStart: `${endPercent}%` })}"></div>
-      <slot name="input"></slot>
     `;
   }
 
@@ -251,10 +260,14 @@ class RangeSlider extends SliderMixin(
       if (this.__value[0] === max) {
         return 0;
       }
+    } else {
+      const target = event.composedPath()[0];
+      if (target.part && target.part.contains('thumb')) {
+        return target.part.contains('thumb-start') ? 0 : 1;
+      }
     }
 
-    const percent = this.__getEventPercent(event);
-    const value = this.__getValueFromPercent(percent);
+    const value = this.__getEventValue(event);
 
     // First thumb position from the "end"
     const index = this.__value.findIndex((v) => value - v < 0);
@@ -264,7 +277,7 @@ class RangeSlider extends SliderMixin(
       closestThumb = index;
     } else if (index === -1) {
       // Pick the last one (position is past all the thumbs)
-      closestThumb = this.__value.length - 1;
+      closestThumb = 1;
     } else {
       const lastStart = this.__value[index - 1];
       const firstEnd = this.__value[index];

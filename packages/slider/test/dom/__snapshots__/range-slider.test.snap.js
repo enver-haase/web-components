@@ -151,117 +151,137 @@ snapshots["vaadin-range-slider host disabled"] =
 /* end snapshot vaadin-range-slider host disabled */
 
 snapshots["vaadin-range-slider shadow default"] = 
-`<div part="track">
-  <div
-    part="track-fill"
-    style="inset-inline-start:0%;inset-inline-end:0%;"
-  >
+`<div id="track">
+  <div id="controls">
+    <div part="track">
+      <div
+        part="track-fill"
+        style="inset-inline-start:0%;inset-inline-end:0%;"
+      >
+      </div>
+    </div>
+    <div
+      part="thumb thumb-start"
+      style="inset-inline-start:0%;"
+    >
+    </div>
+    <div
+      part="thumb thumb-end"
+      style="inset-inline-start:100%;"
+    >
+    </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<div
-  part="thumb thumb-start"
-  style="inset-inline-start:0%;"
->
-</div>
-<div
-  part="thumb thumb-end"
-  style="inset-inline-start:100%;"
->
-</div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-range-slider shadow default */
 
 snapshots["vaadin-range-slider shadow value"] = 
-`<div part="track">
-  <div
-    part="track-fill"
-    style="inset-inline: 10% 80%;"
-  >
+`<div id="track">
+  <div id="controls">
+    <div part="track">
+      <div
+        part="track-fill"
+        style="inset-inline: 10% 80%;"
+      >
+      </div>
+    </div>
+    <div
+      part="thumb thumb-start"
+      style="inset-inline-start: 10%;"
+    >
+    </div>
+    <div
+      part="thumb thumb-end"
+      style="inset-inline-start: 20%;"
+    >
+    </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<div
-  part="thumb thumb-start"
-  style="inset-inline-start: 10%;"
->
-</div>
-<div
-  part="thumb thumb-end"
-  style="inset-inline-start: 20%;"
->
-</div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-range-slider shadow value */
 
 snapshots["vaadin-range-slider shadow min"] = 
-`<div part="track">
-  <div
-    part="track-fill"
-    style="inset-inline: 25%;"
-  >
+`<div id="track">
+  <div id="controls">
+    <div part="track">
+      <div
+        part="track-fill"
+        style="inset-inline: 25%;"
+      >
+      </div>
+    </div>
+    <div
+      part="thumb thumb-start"
+      style="inset-inline-start: 25%;"
+    >
+    </div>
+    <div
+      part="thumb thumb-end"
+      style="inset-inline-start: 75%;"
+    >
+    </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<div
-  part="thumb thumb-start"
-  style="inset-inline-start: 25%;"
->
-</div>
-<div
-  part="thumb thumb-end"
-  style="inset-inline-start: 75%;"
->
-</div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-range-slider shadow min */
 
 snapshots["vaadin-range-slider shadow max"] = 
-`<div part="track">
-  <div
-    part="track-fill"
-    style="inset-inline: 25%;"
-  >
+`<div id="track">
+  <div id="controls">
+    <div part="track">
+      <div
+        part="track-fill"
+        style="inset-inline: 25%;"
+      >
+      </div>
+    </div>
+    <div
+      part="thumb thumb-start"
+      style="inset-inline-start: 25%;"
+    >
+    </div>
+    <div
+      part="thumb thumb-end"
+      style="inset-inline-start: 75%;"
+    >
+    </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<div
-  part="thumb thumb-start"
-  style="inset-inline-start: 25%;"
->
-</div>
-<div
-  part="thumb thumb-end"
-  style="inset-inline-start: 75%;"
->
-</div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-range-slider shadow max */
 
 snapshots["vaadin-range-slider shadow step"] = 
-`<div part="track">
-  <div
-    part="track-fill"
-    style="inset-inline: 20% 40%;"
-  >
+`<div id="track">
+  <div id="controls">
+    <div part="track">
+      <div
+        part="track-fill"
+        style="inset-inline: 20% 40%;"
+      >
+      </div>
+    </div>
+    <div
+      part="thumb thumb-start"
+      style="inset-inline-start: 20%;"
+    >
+    </div>
+    <div
+      part="thumb thumb-end"
+      style="inset-inline-start: 60%;"
+    >
+    </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<div
-  part="thumb thumb-start"
-  style="inset-inline-start: 20%;"
->
-</div>
-<div
-  part="thumb thumb-end"
-  style="inset-inline-start: 60%;"
->
-</div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-range-slider shadow step */
 

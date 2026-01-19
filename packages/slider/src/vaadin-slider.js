@@ -44,6 +44,14 @@ class Slider extends SliderMixin(
     return [
       sliderStyles,
       css`
+        [part='track-fill'] {
+          margin-inline-start: calc(var(--_thumb-size) / 2 * -1);
+        }
+
+        [part='track'] {
+          width: calc(100% + var(--_thumb-size) / 2);
+        }
+
         :host([focus-ring]) [part='thumb'] {
           outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
           outline-offset: 1px;
@@ -80,16 +88,20 @@ class Slider extends SliderMixin(
     const percent = this.__getPercentFromValue(value);
 
     return html`
-      <div part="track">
-        <div
-          part="track-fill"
-          style="${styleMap({
-            insetInlineStart: 0,
-            insetInlineEnd: `${100 - percent}%`,
-          })}"
-        ></div>
+      <div id="track">
+        <div id="controls">
+          <div part="track">
+            <div
+              part="track-fill"
+              style="${styleMap({
+                insetInlineStart: 0,
+                insetInlineEnd: `${100 - percent}%`,
+              })}"
+            ></div>
+          </div>
+          <div part="thumb" style="${styleMap({ insetInlineStart: `${percent}%` })}"></div>
+        </div>
       </div>
-      <div part="thumb" style="${styleMap({ insetInlineStart: `${percent}%` })}"></div>
       <slot name="input"></slot>
     `;
   }

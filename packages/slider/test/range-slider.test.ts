@@ -314,7 +314,9 @@ describe('vaadin-range-slider', () => {
     }
 
     beforeEach(async () => {
-      slider = fixtureSync('<vaadin-range-slider style="width: 200px; margin: 10px"></vaadin-range-slider>');
+      slider = fixtureSync(`
+        <vaadin-range-slider style="width: 200px; --vaadin-slider-thumb-size: 20px"></vaadin-range-slider>
+      `);
       await nextRender();
       thumbs = [...slider.shadowRoot!.querySelectorAll('[part~="thumb"]')];
       inputs = [...slider.querySelectorAll('input')];
@@ -326,34 +328,29 @@ describe('vaadin-range-slider', () => {
 
     describe('individual thumbs', () => {
       it('should update slider value property on first thumb pointermove', async () => {
-        const { x, y } = middleOfThumb(0);
-
         await sendMouseToElement({ type: 'move', element: thumbs[0] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        expect(slider.value).to.deep.equal([0, 100]);
 
+        await sendMouse({ type: 'move', position: [20, 10] });
         expect(slider.value).to.deep.equal([10, 100]);
       });
 
       it('should update slider value property on second thumb pointermove', async () => {
-        const { x, y } = middleOfThumb(1);
-
         await sendMouseToElement({ type: 'move', element: thumbs[1] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x - 20, y] });
+        await sendMouse({ type: 'move', position: [180, 10] });
 
         expect(slider.value).to.deep.equal([0, 90]);
       });
 
       it('should only fire change event on thumb pointerup but not pointermove', async () => {
-        const { x, y } = middleOfThumb(0);
-
         const spy = sinon.spy();
         slider.addEventListener('change', spy);
 
         await sendMouseToElement({ type: 'move', element: thumbs[0] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        await sendMouse({ type: 'move', position: [20, 10] });
 
         expect(spy).to.be.not.called;
 
@@ -374,16 +371,14 @@ describe('vaadin-range-slider', () => {
       });
 
       it('should not fire change event on pointerup if value remains the same', async () => {
-        const { x, y } = middleOfThumb(0);
-
         const spy = sinon.spy();
         slider.addEventListener('change', spy);
 
         await sendMouseToElement({ type: 'move', element: thumbs[0] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        await sendMouse({ type: 'move', position: [20, 10] });
 
-        await sendMouse({ type: 'move', position: [x, y] });
+        await sendMouse({ type: 'move', position: [0, 10] });
         await sendMouse({ type: 'up' });
 
         expect(spy).to.be.not.called;
@@ -392,11 +387,9 @@ describe('vaadin-range-slider', () => {
       it('should not update value property on thumb pointermove when disabled', async () => {
         slider.disabled = true;
 
-        const { x, y } = middleOfThumb(0);
-
         await sendMouseToElement({ type: 'move', element: thumbs[0] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        await sendMouse({ type: 'move', position: [20, 10] });
 
         expect(slider.value).to.deep.equal([0, 100]);
       });
@@ -404,11 +397,9 @@ describe('vaadin-range-slider', () => {
       it('should not update value property on thumb pointermove when readonly', async () => {
         slider.readonly = true;
 
-        const { x, y } = middleOfThumb(0);
-
         await sendMouseToElement({ type: 'move', element: thumbs[0] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        await sendMouse({ type: 'move', position: [20, 10] });
 
         expect(slider.value).to.deep.equal([0, 100]);
       });
@@ -420,9 +411,7 @@ describe('vaadin-range-slider', () => {
       });
 
       it('should focus first input on track pointerdown before the first thumb', async () => {
-        const { x, y } = middleOfThumb(0);
-
-        await sendMouse({ type: 'move', position: [x - 20, y] });
+        await sendMouse({ type: 'move', position: [20, 10] });
         await sendMouse({ type: 'down' });
 
         expect(slider.value).to.deep.equal([10, 80]);
@@ -430,9 +419,7 @@ describe('vaadin-range-slider', () => {
       });
 
       it('should focus second input on track pointerdown after the second thumb', async () => {
-        const { x, y } = middleOfThumb(1);
-
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        await sendMouse({ type: 'move', position: [180, 10] });
         await sendMouse({ type: 'down' });
 
         expect(slider.value).to.deep.equal([20, 90]);
@@ -440,9 +427,7 @@ describe('vaadin-range-slider', () => {
       });
 
       it('should focus first input on track pointerdown between thumbs closer to the first one', async () => {
-        const { x, y } = middleOfThumb(0);
-
-        await sendMouse({ type: 'move', position: [x + 40, y] });
+        await sendMouse({ type: 'move', position: [80, 10] });
         await sendMouse({ type: 'down' });
 
         expect(slider.value).to.deep.equal([40, 80]);
@@ -450,32 +435,24 @@ describe('vaadin-range-slider', () => {
       });
 
       it('should focus second input on track pointerdown between thumbs closer to the second one', async () => {
-        const { x, y } = middleOfThumb(1);
-
-        await sendMouse({ type: 'move', position: [x - 40, y] });
+        await sendMouse({ type: 'move', position: [120, 10] });
         await sendMouse({ type: 'down' });
 
         expect(slider.value).to.deep.equal([20, 60]);
         expect(document.activeElement).to.equal(inputs[1]);
       });
 
-      it('should not focus any of inputs on pointerdown below the track', async () => {
-        const { y } = middleOfThumb(0);
-
-        await sendMouse({ type: 'move', position: [50, y + 10] });
+      it('should focus an input on pointerdown below the visible track', async () => {
+        await sendMouse({ type: 'move', position: [50, 20] });
         await sendMouse({ type: 'down' });
-        inputs.forEach((input) => {
-          expect(document.activeElement).to.not.equal(input);
-        });
+        expect(document.activeElement).to.equal(inputs[0]);
       });
 
       it('should only fire change event on track pointerup', async () => {
-        const { x, y } = middleOfThumb(0);
-
         const spy = sinon.spy();
         slider.addEventListener('change', spy);
 
-        await sendMouse({ type: 'move', position: [x - 20, y] });
+        await sendMouse({ type: 'move', position: [10, 10] });
         await sendMouse({ type: 'down' });
 
         expect(spy).to.be.not.called;
@@ -487,9 +464,7 @@ describe('vaadin-range-slider', () => {
       it('should not update value property on track pointerdown when disabled', async () => {
         slider.disabled = true;
 
-        const { x, y } = middleOfThumb(0);
-
-        await sendMouse({ type: 'move', position: [x - 20, y] });
+        await sendMouse({ type: 'move', position: [10, 10] });
         await sendMouse({ type: 'down' });
 
         expect(slider.value).to.deep.equal([20, 80]);
@@ -498,9 +473,7 @@ describe('vaadin-range-slider', () => {
       it('should not update value property on track pointerdown when readonly', async () => {
         slider.readonly = true;
 
-        const { x, y } = middleOfThumb(0);
-
-        await sendMouse({ type: 'move', position: [x - 20, y] });
+        await sendMouse({ type: 'move', position: [10, 10] });
         await sendMouse({ type: 'down' });
 
         expect(slider.value).to.deep.equal([20, 80]);
@@ -598,7 +571,7 @@ describe('vaadin-range-slider', () => {
 
         await sendMouse({ type: 'move', position: [x - 5, y] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x + 20, y] });
+        await sendMouse({ type: 'move', position: [20, y] });
 
         expect(slider.value).to.deep.equal([0, 10]);
       });
@@ -606,11 +579,10 @@ describe('vaadin-range-slider', () => {
       it('should always move first thumb when both thumbs are at the end', async () => {
         slider.value = [100, 100];
         x = middleOfThumb(1).x;
-        debugger;
 
         await sendMouse({ type: 'move', position: [x + 5, y] });
         await sendMouse({ type: 'down' });
-        await sendMouse({ type: 'move', position: [x - 20, y] });
+        await sendMouse({ type: 'move', position: [180, y] });
 
         expect(slider.value).to.deep.equal([90, 100]);
       });

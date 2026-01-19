@@ -168,8 +168,7 @@ export const SliderMixin = (superClass) =>
      * @private
      */
     __onMouseDown(event) {
-      const part = event.composedPath()[0].getAttribute('part');
-      if (!part || (!part.startsWith('track') && !part.startsWith('thumb'))) {
+      if (!event.composedPath().includes(this.$.track)) {
         return;
       }
 
@@ -189,8 +188,7 @@ export const SliderMixin = (superClass) =>
       }
 
       // Only handle pointerdown on the thumb, track or track-fill
-      const part = event.composedPath()[0].getAttribute('part');
-      if (!part || (!part.startsWith('track') && !part.startsWith('thumb'))) {
+      if (!event.composedPath().includes(this.$.track)) {
         return;
       }
 
@@ -201,8 +199,8 @@ export const SliderMixin = (superClass) =>
 
       this.__thumbIndex = this.__getThumbIndex(event);
 
-      // Update value on track click
-      if (part.startsWith('track')) {
+      // Update value on click within a track, but outside a thumb.
+      if (event.composedPath().indexOf(this.$.track) < 2) {
         const newValue = this.__getEventValue(event);
         this.__updateValue(newValue, this.__thumbIndex);
         this.__commitValue();

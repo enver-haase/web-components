@@ -170,15 +170,15 @@ describe('vaadin-slider', () => {
   });
 
   describe('pointer', () => {
-    let thumb: Element;
-    let track: Element;
+    let thumb: HTMLElement;
+    let track: HTMLElement;
     let y: number;
 
     beforeEach(async () => {
-      slider = fixtureSync('<vaadin-slider style="width: 200px"></vaadin-slider>');
+      slider = fixtureSync('<vaadin-slider style="width: 200px; --vaadin-slider-thumb-size: 20px"></vaadin-slider>');
       await nextRender();
       thumb = slider.shadowRoot!.querySelector('[part="thumb"]')!;
-      track = slider.shadowRoot!.querySelector('[part="track"]')!;
+      track = slider.shadowRoot!.querySelector('#track')!;
       y = Math.round(middleOfNode(thumb).y);
     });
 
@@ -226,9 +226,9 @@ describe('vaadin-slider', () => {
 
       await sendMouseToElement({ type: 'move', element: thumb });
       await sendMouse({ type: 'down' });
-      await sendMouse({ type: 'move', position: [20, y] });
+      await sendMouse({ type: 'move', position: [20, 10] });
 
-      await sendMouse({ type: 'move', position: [0, y] });
+      await sendMouse({ type: 'move', position: [0, 10] });
       await sendMouse({ type: 'up' });
 
       expect(spy).to.be.not.called;
@@ -265,10 +265,10 @@ describe('vaadin-slider', () => {
       expect(document.activeElement).to.equal(slider.querySelector('input'));
     });
 
-    it('should not focus slotted range input on pointerdown below the track', async () => {
+    it('should focus slotted range input on pointerdown below the visible track', async () => {
       await sendMouse({ type: 'move', position: [50, y + 5] });
       await sendMouse({ type: 'down' });
-      expect(document.activeElement).to.not.equal(slider.querySelector('input'));
+      expect(document.activeElement).to.equal(slider.querySelector('input'));
     });
 
     it('should not update slider value property on thumb pointermove when disabled', async () => {
