@@ -46,8 +46,8 @@ class RangeSlider extends SliderMixin(
       sliderStyles,
       css`
         [part='track'] {
-          width: calc(100% + var(--_thumb-size));
-          margin-inline-start: calc(var(--_thumb-size) / 2 * -1);
+          width: calc(100% + var(--_thumb-width));
+          margin-inline-start: calc(var(--_thumb-width) / 2 * -1);
         }
 
         :host([focus-ring][start-focused]) [part~='thumb-start'],

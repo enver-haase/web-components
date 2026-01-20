@@ -11,11 +11,11 @@ export const sliderStyles = css`
     display: inline-grid;
     box-sizing: border-box;
     width: 100%;
-    height: var(--_thumb-size);
     user-select: none;
     -webkit-user-select: none;
     --_track-radius: var(--vaadin-slider-track-border-radius, var(--vaadin-radius-m));
-    --_thumb-size: var(--vaadin-slider-thumb-size, 1lh);
+    --_thumb-width: var(--vaadin-slider-thumb-width, 1lh);
+    --_thumb-height: var(--vaadin-slider-thumb-height, 1lh);
     --_track-size: var(--vaadin-slider-track-size, 0.25lh);
   }
 
@@ -39,14 +39,14 @@ export const sliderStyles = css`
   #track {
     box-sizing: border-box;
     min-width: 100%;
-    height: var(--_thumb-size);
-    padding-inline: calc(var(--_thumb-size) / 2);
+    height: var(--_thumb-height);
+    padding-inline: calc(var(--_thumb-width) / 2);
   }
 
   #controls {
     position: relative;
     display: grid;
-    grid-template-rows: var(--_thumb-size);
+    grid-template-rows: var(--_thumb-height);
   }
 
   [part='track'] {
@@ -71,8 +71,8 @@ export const sliderStyles = css`
   [part~='thumb'] {
     position: absolute;
     box-sizing: border-box;
-    width: var(--_thumb-size);
-    height: var(--_thumb-size);
+    width: var(--_thumb-width);
+    height: var(--_thumb-height);
     transform: translateX(-50%);
     background: var(--vaadin-slider-fill-background, var(--vaadin-text-color));
     border-radius: 50%;
@@ -88,7 +88,7 @@ export const sliderStyles = css`
   ::slotted(input) {
     flex: 1;
     font: inherit;
-    height: var(--_thumb-size);
+    height: var(--_thumb-height);
     opacity: 0 !important;
     margin: 0 !important;
     pointer-events: none;

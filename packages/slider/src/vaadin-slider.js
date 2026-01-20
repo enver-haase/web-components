@@ -45,11 +45,11 @@ class Slider extends SliderMixin(
       sliderStyles,
       css`
         [part='track-fill'] {
-          margin-inline-start: calc(var(--_thumb-size) / 2 * -1);
+          margin-inline-start: calc(var(--_thumb-width) / 2 * -1);
         }
 
         [part='track'] {
-          width: calc(100% + var(--_thumb-size) / 2);
+          width: calc(100% + var(--_thumb-width) / 2);
         }
 
         :host([focus-ring]) [part='thumb'] {
