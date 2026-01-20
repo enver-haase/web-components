@@ -111,9 +111,9 @@ snapshots["vaadin-slider shadow default"] =
     >
     </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-slider shadow default */
 
@@ -133,9 +133,9 @@ snapshots["vaadin-slider shadow value"] =
     >
     </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-slider shadow value */
 
@@ -155,9 +155,9 @@ snapshots["vaadin-slider shadow min"] =
     >
     </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-slider shadow min */
 
@@ -177,9 +177,9 @@ snapshots["vaadin-slider shadow max"] =
     >
     </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-slider shadow max */
 
@@ -199,9 +199,9 @@ snapshots["vaadin-slider shadow step"] =
     >
     </div>
   </div>
+  <slot name="input">
+  </slot>
 </div>
-<slot name="input">
-</slot>
 `;
 /* end snapshot vaadin-slider shadow step */
 

@@ -37,6 +37,7 @@ export const sliderStyles = css`
   }
 
   #track {
+    position: relative;
     box-sizing: border-box;
     min-width: 100%;
     height: var(--_thumb-height);
@@ -86,7 +87,8 @@ export const sliderStyles = css`
 
   /* visually hidden */
   ::slotted(input) {
-    flex: 1;
+    position: absolute;
+    inset: 0;
     font: inherit;
     height: var(--_thumb-height);
     opacity: 0 !important;

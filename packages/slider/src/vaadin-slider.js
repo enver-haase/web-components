@@ -101,8 +101,8 @@ class Slider extends SliderMixin(
           </div>
           <div part="thumb" style="${styleMap({ insetInlineStart: `${percent}%` })}"></div>
         </div>
+        <slot name="input"></slot>
       </div>
-      <slot name="input"></slot>
     `;
   }
 
