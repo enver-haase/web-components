@@ -93,6 +93,13 @@ describe('vaadin-slider', () => {
       expect(document.activeElement).to.not.equal(input);
     });
 
+    it('should focus the input on required indicator click', () => {
+      slider.required = true;
+      const indicator = slider.shadowRoot!.querySelector('[part="required-indicator"]') as HTMLElement;
+      indicator.click();
+      expect(document.activeElement).to.equal(input);
+    });
+
     it('should not throw when calling focus() before adding to the DOM', () => {
       expect(() => document.createElement('vaadin-slider').focus()).to.not.throw(Error);
     });
@@ -269,6 +276,13 @@ describe('vaadin-slider', () => {
       await sendMouse({ type: 'move', position: [50, y + 5] });
       await sendMouse({ type: 'down' });
       expect(document.activeElement).to.equal(slider.querySelector('input'));
+    });
+
+    it('should not focus an input on pointerdown on the helper element', async () => {
+      slider.helperText = 'Helper';
+      await sendMouse({ type: 'move', position: [20, 30] });
+      await sendMouse({ type: 'down' });
+      expect(document.activeElement).to.not.equal(slider.querySelector('input'));
     });
 
     it('should not update slider value property on thumb pointermove when disabled', async () => {

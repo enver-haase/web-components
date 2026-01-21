@@ -129,6 +129,13 @@ describe('vaadin-range-slider', () => {
       expect(document.activeElement).to.not.equal(inputs[1]);
     });
 
+    it('should focus the input on required indicator click', () => {
+      slider.required = true;
+      const indicator = slider.shadowRoot!.querySelector('[part="required-indicator"]') as HTMLElement;
+      indicator.click();
+      expect(document.activeElement).to.equal(inputs[0]);
+    });
+
     it('should not throw when calling focus() before adding to the DOM', () => {
       expect(() => document.createElement('vaadin-range-slider').focus()).to.not.throw(Error);
     });
@@ -443,9 +450,16 @@ describe('vaadin-range-slider', () => {
       });
 
       it('should focus an input on pointerdown below the visible track', async () => {
-        await sendMouse({ type: 'move', position: [50, 20] });
+        await sendMouse({ type: 'move', position: [50, 15] });
         await sendMouse({ type: 'down' });
         expect(document.activeElement).to.equal(inputs[0]);
+      });
+
+      it('should not focus an input on pointerdown on the helper element', async () => {
+        slider.helperText = 'Helper';
+        await sendMouse({ type: 'move', position: [20, 30] });
+        await sendMouse({ type: 'down' });
+        expect(document.activeElement).to.not.equal(inputs[0]);
       });
 
       it('should only fire change event on track pointerup', async () => {

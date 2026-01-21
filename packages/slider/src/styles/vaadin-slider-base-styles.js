@@ -8,9 +8,7 @@ import { css } from 'lit';
 
 export const sliderStyles = css`
   :host {
-    display: inline-grid;
     box-sizing: border-box;
-    width: 100%;
     user-select: none;
     -webkit-user-select: none;
     --_track-radius: var(--vaadin-slider-track-border-radius, var(--vaadin-radius-m));
@@ -37,11 +35,20 @@ export const sliderStyles = css`
   }
 
   #track {
+    grid-column: 1;
+    grid-area: input;
     position: relative;
     box-sizing: border-box;
+    width: var(--vaadin-field-default-width, 12em);
+    max-width: 100%;
     min-width: 100%;
     height: var(--_thumb-height);
     padding-inline: calc(var(--_thumb-width) / 2);
+  }
+
+  :host([has-label]) #track {
+    border-block: var(--vaadin-input-field-border-width, 1px) solid transparent;
+    margin-block: var(--vaadin-padding-block-container);
   }
 
   #controls {
