@@ -108,4 +108,61 @@ export const clockStyles = css`
   rect {
     shape-rendering: crispEdges;
   }
+
+  /* Interactive state styling */
+  :host([adjustable]:not([disabled]):not([readonly])) {
+    cursor: pointer;
+  }
+
+  :host(:focus) {
+    outline: 2px solid var(--vaadin-clock-second-hand-color);
+    outline-offset: 2px;
+  }
+
+  :host(:focus:not(:focus-visible)) {
+    outline: none;
+  }
+
+  :host(:focus-visible) {
+    outline: 2px solid var(--vaadin-clock-second-hand-color);
+    outline-offset: 2px;
+  }
+
+  /* Invisible hit area for easier hand dragging */
+  .hand-hitarea {
+    stroke: transparent;
+    stroke-width: 12;
+    stroke-linecap: round;
+    pointer-events: none;
+  }
+
+  /* Hand group for hover/drag effects */
+  .hand-group {
+    pointer-events: none;
+  }
+
+  .hand-group.draggable {
+    pointer-events: stroke;
+    cursor: grab;
+  }
+
+  .hand-group.draggable:active {
+    cursor: grabbing;
+  }
+
+  .hand-group.draggable .hand-hitarea {
+    pointer-events: stroke;
+  }
+
+  /* Hover effect on hands when interactive */
+  .hand-group.draggable:hover .hour-hand,
+  .hand-group.draggable:hover .minute-hand,
+  .hand-group.draggable:hover .second-hand {
+    filter: drop-shadow(0 0 2px var(--vaadin-clock-second-hand-color));
+  }
+
+  /* Make inner face clickable when interactive */
+  .interactive .clock-inner-face {
+    cursor: crosshair;
+  }
 `;
