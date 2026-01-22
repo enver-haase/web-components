@@ -11,6 +11,20 @@ import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mix
 import { clockStyles } from './styles/vaadin-clock-base-styles.js';
 
 /**
+ * Theme variant constants for the clock component.
+ * @readonly
+ * @enum {string}
+ */
+const ClockTheme = {
+  /** Lumo theme - modern, clean appearance */
+  LUMO: 'lumo',
+  /** Aura theme - refined, professional appearance */
+  AURA: 'aura',
+  /** Dark mode - can be combined with LUMO or AURA */
+  DARK: 'dark',
+};
+
+/**
  * `<vaadin-clock>` is a Web Component displaying an analog clock face.
  *
  * ```html
@@ -20,11 +34,19 @@ import { clockStyles } from './styles/vaadin-clock-base-styles.js';
  * clock.value = '14:30:00';
  * ```
  *
- * When the `value` is `null` or empty, the clock displays the current time
- * and animates in real-time.
+ * When the `value` is `null` or empty and `running` is `false`, the clock
+ * displays the current time statically. Set `running` to `true` to animate.
  *
  * The clock is styled to resemble the classic Amiga Workbench 1.2 clock,
- * with its distinctive retro aesthetic.
+ * with its distinctive retro aesthetic. Theme variants are available:
+ *
+ * ```html
+ * <!-- Lumo theme -->
+ * <vaadin-clock theme="lumo"></vaadin-clock>
+ *
+ * <!-- Aura theme with dark mode -->
+ * <vaadin-clock theme="aura dark"></vaadin-clock>
+ * ```
  *
  * ### Styling
  *
@@ -40,11 +62,13 @@ import { clockStyles } from './styles/vaadin-clock-base-styles.js';
  * `--vaadin-clock-minute-hand-color` | Minute hand color          | `#000000`
  * `--vaadin-clock-second-hand-color` | Second hand color          | `#FF8800`
  * `--vaadin-clock-tick-color`        | Tick marks color           | `#000000`
+ * `--vaadin-clock-label-color`       | Label text color           | `currentColor`
  *
  * The following shadow DOM parts are available for styling:
  *
  * Part name       | Description
  * ----------------|----------------
+ * `label`         | The label element
  * `clock`         | The clock container
  * `face`          | The clock face circle
  * `hour-hand`     | The hour hand
@@ -60,6 +84,12 @@ import { clockStyles } from './styles/vaadin-clock-base-styles.js';
  * @mixes ThemableMixin
  */
 class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
+  /**
+   * Theme variant constants.
+   * @type {typeof ClockTheme}
+   */
+  static Theme = ClockTheme;
+
   static get is() {
     return 'vaadin-clock';
   }
@@ -72,7 +102,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     return {
       /**
        * The time value in HH:mm:ss or HH:mm format.
-       * When null or empty, displays and animates the current time.
+       * When running, getValue() returns base time + elapsed running time.
        * @type {string | null}
        */
       value: {
@@ -80,6 +110,19 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
         value: null,
         notify: true,
         observer: '_valueChanged',
+      },
+
+      /**
+       * Whether the clock is running (animating).
+       * When running, the displayed time advances in real-time from the
+       * base value set via setValue(). Default is false.
+       * @type {boolean}
+       */
+      running: {
+        type: Boolean,
+        value: false,
+        reflectToAttribute: true,
+        observer: '_runningChanged',
       },
 
       /**
@@ -140,6 +183,37 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
       step: {
         type: Number,
         value: 60,
+      },
+
+      /**
+       * Label for the clock, displayed above the clock face.
+       * @type {string}
+       */
+      label: {
+        type: String,
+        value: '',
+      },
+
+      /**
+       * Accessible name for the clock, used for screen readers.
+       * Maps to aria-label attribute.
+       * @type {string | null}
+       */
+      accessibleName: {
+        type: String,
+        value: null,
+        observer: '_updateAriaAttributes',
+      },
+
+      /**
+       * ID of an element that labels the clock, used for screen readers.
+       * Maps to aria-labelledby attribute.
+       * @type {string | null}
+       */
+      accessibleNameRef: {
+        type: String,
+        value: null,
+        observer: '_updateAriaAttributes',
       },
 
       /**
@@ -210,11 +284,35 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onFocus = this._onFocus.bind(this);
     this._onBlur = this._onBlur.bind(this);
+
+    // Running clock state:
+    // _baseTimeMs: the base time in milliseconds from midnight (set via value)
+    // _runStartTimestamp: Date.now() when running was set to true
+    // _accumulatedMs: total milliseconds accumulated from previous running periods
+    this._baseTimeMs = 0;
+    this._runStartTimestamp = null;
+    this._accumulatedMs = 0;
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this._startAnimation();
+
+    // Initialize display
+    if (this.value) {
+      this._parseAndSetTime(this.value);
+    } else {
+      // Show current time initially
+      const now = new Date();
+      this._hours = now.getHours();
+      this._minutes = now.getMinutes();
+      this._seconds = now.getSeconds();
+    }
+
+    // Start animation if running
+    if (this.running) {
+      this._startAnimation();
+    }
+
     // Add global listeners for drag continuation
     document.addEventListener('mousemove', this._onMouseMove);
     document.addEventListener('mouseup', this._onMouseUp);
@@ -239,9 +337,14 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     if (!this.hasAttribute('tabindex')) {
       this.setAttribute('tabindex', '0');
     }
+    // Set role for accessibility
+    if (!this.hasAttribute('role')) {
+      this.setAttribute('role', 'img');
+    }
     this.addEventListener('keydown', this._onKeyDown);
     this.addEventListener('focus', this._onFocus);
     this.addEventListener('blur', this._onBlur);
+    this._updateAriaAttributes();
   }
 
   /** @protected */
@@ -252,6 +355,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     const isInteractive = this._isInteractive();
 
     return html`
+      <div part="label">${this.label || ''}</div>
       <div part="clock" class="clock-container ${isInteractive ? 'interactive' : ''}">
         <svg viewBox="0 0 100 100" class="clock-svg">
           <!-- Clock face background -->
@@ -272,6 +376,9 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
 
           <!-- Hour ticks -->
           ${this._renderTicks()}
+
+          <!-- AM/PM indicators -->
+          ${this._renderAmPmIndicators(isInteractive)}
 
           <!-- Hour hand (with larger hit area for dragging) -->
           <g
@@ -361,13 +468,90 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     return ticks;
   }
 
+  /**
+   * Renders AM/PM indicator icons (sun for AM, moon for PM).
+   * @private
+   */
+  _renderAmPmIndicators(isInteractive) {
+    const isAM = this._hours < 12;
+    const clickable = isInteractive ? 'clickable' : '';
+
+    return svg`
+      <!-- Sun icon (AM) - 8-ray sun -->
+      <g class="sun-icon ${isAM ? 'active' : ''} ${clickable}"
+        @click=${isInteractive ? () => this._toggleAmPm(true) : null}
+        transform="translate(18, 75)">
+        <circle cx="0" cy="0" r="3" />
+        ${[0, 45, 90, 135, 180, 225, 270, 315].map(
+          (angle) => svg`
+          <line x1="0" y1="-4.5" x2="0" y2="-6.5"
+            transform="rotate(${angle})"
+            stroke-width="1"
+            stroke="currentColor" />
+        `,
+        )}
+      </g>
+
+      <!-- Moon icon (PM) - crescent moon -->
+      <g class="moon-icon ${!isAM ? 'active' : ''} ${clickable}"
+        @click=${isInteractive ? () => this._toggleAmPm(false) : null}
+        transform="translate(82, 75)">
+        <path d="M-3,-5 A6,6 0 1,1 -3,5 A4,4 0 1,0 -3,-5" />
+      </g>
+    `;
+  }
+
+  /**
+   * Toggle between AM and PM.
+   * @param {boolean} toAM - true to switch to AM, false to switch to PM
+   * @private
+   */
+  _toggleAmPm(toAM) {
+    if (!this._isInteractive()) return;
+
+    const isCurrentlyAM = this._hours < 12;
+    if (toAM === isCurrentlyAM) return; // Already in desired state
+
+    // Toggle by adding/subtracting 12 hours
+    let newHours = toAM ? this._hours - 12 : this._hours + 12;
+    if (newHours < 0) newHours += 24;
+    if (newHours >= 24) newHours -= 24;
+
+    const newValue = Clock.formatTime(newHours, this._minutes, this._seconds);
+    if (this._isWithinBounds(newValue)) {
+      this._setTimeValue(newHours, this._minutes, this._seconds);
+    }
+  }
+
   /** @private */
   _valueChanged(newValue) {
     if (newValue) {
-      this._stopAnimation();
       this._parseAndSetTime(newValue);
-    } else {
+      // Update base time for running mode
+      const parsed = Clock.parseTime(newValue);
+      if (parsed) {
+        this._baseTimeMs = parsed.hours * 3600000 + parsed.minutes * 60000 + parsed.seconds * 1000;
+        this._accumulatedMs = 0;
+        if (this.running) {
+          this._runStartTimestamp = Date.now();
+        }
+      }
+    }
+  }
+
+  /** @private */
+  _runningChanged(newValue, oldValue) {
+    if (newValue) {
+      // Starting to run
+      this._runStartTimestamp = Date.now();
       this._startAnimation();
+    } else if (oldValue) {
+      // Stopping
+      if (this._runStartTimestamp) {
+        this._accumulatedMs += Date.now() - this._runStartTimestamp;
+        this._runStartTimestamp = null;
+      }
+      this._stopAnimation();
     }
   }
 
@@ -385,21 +569,33 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
 
   /** @private */
   _startAnimation() {
-    if (this.value) return; // Don't animate if value is set
+    if (!this.running) return;
 
-    // Use setInterval for second-precision updates to save CPU
-    this._animate();
-    this._intervalId = setInterval(() => this._animate(), 1000);
+    const animate = () => {
+      if (!this.running) return;
+      this._updateDisplayFromRunningTime();
+      this._animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
   }
 
-  /** @private */
-  _animate() {
-    if (this.value) return;
+  /**
+   * Updates the displayed time based on running elapsed time.
+   * @private
+   */
+  _updateDisplayFromRunningTime() {
+    let elapsedMs = this._accumulatedMs;
+    if (this._runStartTimestamp) {
+      elapsedMs += Date.now() - this._runStartTimestamp;
+    }
 
-    const now = new Date();
-    this._hours = now.getHours();
-    this._minutes = now.getMinutes();
-    this._seconds = now.getSeconds();
+    const totalMs = this._baseTimeMs + elapsedMs;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const normalizedMs = ((totalMs % dayMs) + dayMs) % dayMs;
+
+    this._hours = Math.floor(normalizedMs / 3600000);
+    this._minutes = Math.floor((normalizedMs % 3600000) / 60000);
+    this._seconds = Math.floor((normalizedMs % 60000) / 1000);
   }
 
   /** @private */
@@ -411,6 +607,24 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     if (this._intervalId) {
       clearInterval(this._intervalId);
       this._intervalId = null;
+    }
+  }
+
+  /**
+   * Updates ARIA attributes for accessibility.
+   * @private
+   */
+  _updateAriaAttributes() {
+    if (this.accessibleName) {
+      this.setAttribute('aria-label', this.accessibleName);
+    } else {
+      this.removeAttribute('aria-label');
+    }
+
+    if (this.accessibleNameRef) {
+      this.setAttribute('aria-labelledby', this.accessibleNameRef);
+    } else {
+      this.removeAttribute('aria-labelledby');
     }
   }
 
@@ -468,15 +682,6 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
    * @private
    */
   _adjustTimeByStep(stepSeconds) {
-    // If animating (no value), stop animation and use current time
-    if (!this.value) {
-      const now = new Date();
-      this._hours = now.getHours();
-      this._minutes = now.getMinutes();
-      this._seconds = now.getSeconds();
-      this._stopAnimation();
-    }
-
     // Convert current time to total seconds
     let totalSeconds = this._hours * 3600 + this._minutes * 60 + this._seconds;
     totalSeconds += stepSeconds;
@@ -510,6 +715,13 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     this._minutes = minutes;
     this._seconds = seconds;
     this.value = Clock.formatTime(hours, minutes, seconds);
+
+    // Update base time for running mode
+    this._baseTimeMs = hours * 3600000 + minutes * 60000 + seconds * 1000;
+    this._accumulatedMs = 0;
+    if (this.running) {
+      this._runStartTimestamp = Date.now();
+    }
   }
 
   /**
@@ -571,13 +783,6 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     const angle = this._getAngleFromPoint(clientX, clientY);
     const minutes = Math.round(angle / 6) % 60;
 
-    // If animating, stop and use current hour
-    if (!this.value) {
-      const now = new Date();
-      this._hours = now.getHours();
-      this._stopAnimation();
-    }
-
     const newValue = Clock.formatTime(this._hours, minutes, 0);
     if (this._isWithinBounds(newValue)) {
       this._setTimeValue(this._hours, minutes, 0);
@@ -612,15 +817,6 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
    */
   _startDrag(hand) {
     this._draggingHand = hand;
-
-    // If animating, stop and capture current time
-    if (!this.value) {
-      const now = new Date();
-      this._hours = now.getHours();
-      this._minutes = now.getMinutes();
-      this._seconds = now.getSeconds();
-      this._stopAnimation();
-    }
   }
 
   /**
@@ -716,7 +912,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     if (this._draggingHand) {
       this._draggingHand = null;
       // Commit the final value
-      this.value = Clock.formatTime(this._hours, this._minutes, this._seconds);
+      this._setTimeValue(this._hours, this._minutes, this._seconds);
     }
   }
 
@@ -740,6 +936,40 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     if (angle < 0) angle += 360;
 
     return angle;
+  }
+
+  /**
+   * Gets the current value, accounting for running time if applicable.
+   * @returns {string | null}
+   */
+  getValue() {
+    if (!this.running) {
+      return this.value;
+    }
+
+    // Calculate current time including elapsed running time
+    let elapsedMs = this._accumulatedMs;
+    if (this._runStartTimestamp) {
+      elapsedMs += Date.now() - this._runStartTimestamp;
+    }
+
+    const totalMs = this._baseTimeMs + elapsedMs;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const normalizedMs = ((totalMs % dayMs) + dayMs) % dayMs;
+
+    const hours = Math.floor(normalizedMs / 3600000);
+    const minutes = Math.floor((normalizedMs % 3600000) / 60000);
+    const seconds = Math.floor((normalizedMs % 60000) / 1000);
+
+    return Clock.formatTime(hours, minutes, seconds);
+  }
+
+  /**
+   * Sets the value and resets accumulated running time.
+   * @param {string} value - Time in HH:mm:ss or HH:mm format
+   */
+  setValue(value) {
+    this.value = value;
   }
 
   /**
@@ -775,4 +1005,4 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
 
 defineCustomElement(Clock);
 
-export { Clock };
+export { Clock, ClockTheme };
