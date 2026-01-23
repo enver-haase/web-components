@@ -8,6 +8,7 @@ import { defineCustomElement } from '@vaadin/component-base/src/define.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
 import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
+import { ThemeDetectionMixin } from '@vaadin/vaadin-themable-mixin/vaadin-theme-detection-mixin.js';
 import { clockStyles } from './styles/vaadin-clock-base-styles.js';
 
 /**
@@ -83,7 +84,7 @@ const ClockTheme = {
  * @mixes ElementMixin
  * @mixes ThemableMixin
  */
-class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
+class Clock extends ThemeDetectionMixin(ThemableMixin(ElementMixin(PolylitMixin(LitElement)))) {
   /**
    * Theme variant constants.
    * @type {typeof ClockTheme}
@@ -317,6 +318,9 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     document.addEventListener('mouseup', this._onMouseUp);
     document.addEventListener('touchmove', this._onTouchMove, { passive: false });
     document.addEventListener('touchend', this._onTouchEnd);
+
+    // Observe document theme attribute for dark mode detection
+    this._observeDocumentTheme();
   }
 
   disconnectedCallback() {
@@ -327,6 +331,66 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
     document.removeEventListener('mouseup', this._onMouseUp);
     document.removeEventListener('touchmove', this._onTouchMove);
     document.removeEventListener('touchend', this._onTouchEnd);
+    // Stop observing document theme
+    this._disconnectThemeObserver();
+  }
+
+  /**
+   * Observes the document's theme attribute for dark mode changes.
+   * @private
+   */
+  _observeDocumentTheme() {
+    this._applyDocumentTheme();
+
+    if (!this._themeObserver) {
+      this._themeObserver = new MutationObserver(() => {
+        this._applyDocumentTheme();
+      });
+      this._themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['theme'],
+      });
+    }
+  }
+
+  /**
+   * Disconnects the theme observer.
+   * @private
+   */
+  _disconnectThemeObserver() {
+    if (this._themeObserver) {
+      this._themeObserver.disconnect();
+      this._themeObserver = null;
+    }
+  }
+
+  /**
+   * Applies theme from document element to this component.
+   * @private
+   */
+  _applyDocumentTheme() {
+    const docTheme = document.documentElement.getAttribute('theme') || '';
+    const themeTokens = docTheme.toLowerCase().split(/\s+/u);
+
+    // Apply dark mode
+    if (themeTokens.includes('dark')) {
+      this.dataset.darkMode = '';
+    } else {
+      delete this.dataset.darkMode;
+    }
+
+    // Apply theme variant if not explicitly set on component
+    if (!this.hasAttribute('theme')) {
+      if (themeTokens.includes('aura')) {
+        this.dataset.inheritedTheme = 'aura';
+      } else if (themeTokens.includes('lumo') || this.dataset.applicationTheme === 'lumo') {
+        this.dataset.inheritedTheme = 'lumo';
+      } else if (this.dataset.applicationTheme === 'aura') {
+        this.dataset.inheritedTheme = 'aura';
+      } else {
+        delete this.dataset.inheritedTheme;
+      }
+    }
   }
 
   /** @protected */
@@ -479,14 +543,13 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
       <!-- Sun icon (AM) - 8-ray sun -->
       <g class="sun-icon ${isAM ? 'active' : ''} ${clickable}"
         @click=${isInteractive ? () => this._toggleAmPm(true) : null}
-        transform="translate(40, 68)">
+        transform="translate(42, 68)">
         <circle cx="0" cy="0" r="3" />
         ${[0, 45, 90, 135, 180, 225, 270, 315].map(
           (angle) => svg`
           <line x1="0" y1="-4.5" x2="0" y2="-6.5"
             transform="rotate(${angle})"
-            stroke-width="1"
-            stroke="currentColor" />
+            stroke-width="1" />
         `,
         )}
       </g>
@@ -494,7 +557,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
       <!-- Moon icon (PM) - crescent moon -->
       <g class="moon-icon ${!isAM ? 'active' : ''} ${clickable}"
         @click=${isInteractive ? () => this._toggleAmPm(false) : null}
-        transform="translate(60, 68)">
+        transform="translate(58, 68)">
         <path d="M-3,-5 A6,6 0 1,1 -3,5 A4,4 0 1,0 -3,-5" />
       </g>
     `;
@@ -583,6 +646,9 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
    * @private
    */
   _updateDisplayFromRunningTime() {
+    // Don't update display while user is dragging - let them control the hands
+    if (this._draggingHand) return;
+
     let elapsedMs = this._accumulatedMs;
     if (this._runStartTimestamp) {
       elapsedMs += Date.now() - this._runStartTimestamp;
@@ -653,18 +719,29 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
 
   /**
    * Keyboard event handler for arrow key time adjustment.
+   * Up/Down: adjust by at least 1 hour (minimum steps to reach 60 minutes)
+   * Left/Right: adjust by single step
    * @private
    */
   _onKeyDown(e) {
     if (!this._isInteractive() || !this._focused) return;
 
     const step = this.step || 60;
+    // Calculate minimum multiple of step that is >= 1 hour (3600 seconds)
+    const hourInSeconds = 3600;
+    const hourStep = Math.ceil(hourInSeconds / step) * step;
     let handled = false;
 
-    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+    if (e.key === 'ArrowUp') {
+      this._adjustTimeByStep(hourStep);
+      handled = true;
+    } else if (e.key === 'ArrowDown') {
+      this._adjustTimeByStep(-hourStep);
+      handled = true;
+    } else if (e.key === 'ArrowRight') {
       this._adjustTimeByStep(step);
       handled = true;
-    } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+    } else if (e.key === 'ArrowLeft') {
       this._adjustTimeByStep(-step);
       handled = true;
     }
@@ -816,6 +893,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
    */
   _startDrag(hand) {
     this._draggingHand = hand;
+    this._lastDragAngle = undefined; // Reset for wrap detection
   }
 
   /**
@@ -841,6 +919,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
 
   /**
    * Handle drag movement to update time.
+   * Minute and second hands can wrap around to affect higher-order units.
    * @private
    */
   _handleDrag(clientX, clientY) {
@@ -861,13 +940,49 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
         break;
       }
 
-      case 'minute':
-        newMinutes = Math.round(angle / 6) % 60;
+      case 'minute': {
+        const newMinuteValue = Math.round(angle / 6) % 60;
+        // Detect wrap-around by checking if we crossed 12 o'clock
+        if (this._lastDragAngle !== undefined) {
+          const crossed = this._detectCrossing(this._lastDragAngle, angle);
+          if (crossed === 1) {
+            // Clockwise past 12 - increment hour
+            newHours = (newHours + 1) % 24;
+          } else if (crossed === -1) {
+            // Counter-clockwise past 12 - decrement hour
+            newHours = (newHours + 23) % 24;
+          }
+        }
+        newMinutes = newMinuteValue;
+        this._lastDragAngle = angle;
         break;
+      }
 
-      case 'second':
-        newSeconds = Math.round(angle / 6) % 60;
+      case 'second': {
+        const newSecondValue = Math.round(angle / 6) % 60;
+        // Detect wrap-around
+        if (this._lastDragAngle !== undefined) {
+          const crossed = this._detectCrossing(this._lastDragAngle, angle);
+          if (crossed === 1) {
+            // Clockwise past 12 - increment minute
+            newMinutes += 1;
+            if (newMinutes >= 60) {
+              newMinutes = 0;
+              newHours = (newHours + 1) % 24;
+            }
+          } else if (crossed === -1) {
+            // Counter-clockwise past 12 - decrement minute
+            newMinutes -= 1;
+            if (newMinutes < 0) {
+              newMinutes = 59;
+              newHours = (newHours + 23) % 24;
+            }
+          }
+        }
+        newSeconds = newSecondValue;
+        this._lastDragAngle = angle;
         break;
+      }
 
       default:
         // No-op for unknown hand types
@@ -881,6 +996,26 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
       this._seconds = newSeconds;
       this.requestUpdate();
     }
+  }
+
+  /**
+   * Detect if the angle crossed the 12 o'clock position (0/360 degrees).
+   * Returns 1 for clockwise crossing, -1 for counter-clockwise, 0 for no crossing.
+   * @private
+   */
+  _detectCrossing(oldAngle, newAngle) {
+    const threshold = 90; // Minimum jump to detect crossing vs normal movement
+    const diff = newAngle - oldAngle;
+
+    // Clockwise crossing: went from ~350 to ~10 (diff is large negative)
+    if (diff < -threshold) {
+      return 1;
+    }
+    // Counter-clockwise crossing: went from ~10 to ~350 (diff is large positive)
+    if (diff > threshold) {
+      return -1;
+    }
+    return 0;
   }
 
   /**
@@ -910,6 +1045,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
   _endDrag() {
     if (this._draggingHand) {
       this._draggingHand = null;
+      this._lastDragAngle = undefined;
       // Commit the final value
       this._setTimeValue(this._hours, this._minutes, this._seconds);
     }
@@ -942,14 +1078,15 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
    * @returns {string | null}
    */
   getValue() {
-    if (!this.running) {
-      return this.value;
-    }
-
     // Calculate current time including elapsed running time
     let elapsedMs = this._accumulatedMs;
     if (this._runStartTimestamp) {
       elapsedMs += Date.now() - this._runStartTimestamp;
+    }
+
+    // If no elapsed time and not running, return the base value
+    if (elapsedMs === 0 && !this.running) {
+      return this.value;
     }
 
     const totalMs = this._baseTimeMs + elapsedMs;

@@ -173,7 +173,8 @@ export const clockStyles = css`
   .hand-group.draggable:hover .hour-hand,
   .hand-group.draggable:hover .minute-hand,
   .hand-group.draggable:hover .second-hand {
-    filter: drop-shadow(0 0 2px var(--vaadin-clock-second-hand-color));
+    filter: drop-shadow(0 0 2px var(--vaadin-clock-second-hand-color))
+      drop-shadow(0 0 4px var(--vaadin-clock-second-hand-color));
   }
 
   /* Make inner face clickable when interactive */
@@ -185,13 +186,19 @@ export const clockStyles = css`
   .sun-icon,
   .moon-icon {
     fill: var(--vaadin-clock-tick-color);
+    color: var(--vaadin-clock-tick-color);
     pointer-events: none;
     user-select: none;
+  }
+
+  .sun-icon line {
+    stroke: currentColor;
   }
 
   .sun-icon.active,
   .moon-icon.active {
     fill: var(--vaadin-clock-second-hand-color);
+    color: var(--vaadin-clock-second-hand-color);
   }
 
   .sun-icon.clickable,
@@ -203,13 +210,17 @@ export const clockStyles = css`
   .sun-icon.clickable:hover,
   .moon-icon.clickable:hover {
     fill: var(--vaadin-clock-second-hand-color);
+    color: var(--vaadin-clock-second-hand-color);
   }
 
   /* ========================================
    * Lumo Theme Variant
    * Modern, clean appearance using Lumo design tokens
+   * Applied via theme attribute or inherited from document
    * ======================================== */
-  :host([theme~='lumo']) {
+  :host([theme~='lumo']),
+  :host([data-application-theme='lumo']),
+  :host([data-inherited-theme='lumo']) {
     --vaadin-clock-background: var(--lumo-contrast-5pct, #f3f5f7);
     --vaadin-clock-face-color: var(--lumo-base-color, #ffffff);
     --vaadin-clock-inner-face-color: var(--lumo-base-color, #ffffff);
@@ -223,43 +234,60 @@ export const clockStyles = css`
     --vaadin-clock-label-color: var(--lumo-secondary-text-color, #6b7280);
   }
 
-  :host([theme~='lumo']) .clock-container {
+  :host([theme~='lumo']) .clock-container,
+  :host([data-application-theme='lumo']) .clock-container,
+  :host([data-inherited-theme='lumo']) .clock-container {
     border-radius: var(--lumo-border-radius-m, 8px);
     border: 1px solid var(--lumo-contrast-20pct, #d4d8dd);
     box-shadow: var(--lumo-box-shadow-xs, 0 1px 2px rgba(0, 0, 0, 0.05));
   }
 
-  :host([theme~='lumo']) .clock-face {
+  :host([theme~='lumo']) .clock-face,
+  :host([data-application-theme='lumo']) .clock-face,
+  :host([data-inherited-theme='lumo']) .clock-face {
     stroke-width: 0.5;
   }
 
-  :host([theme~='lumo']) .clock-inner-face {
+  :host([theme~='lumo']) .clock-inner-face,
+  :host([data-application-theme='lumo']) .clock-inner-face,
+  :host([data-inherited-theme='lumo']) .clock-inner-face {
     rx: 4;
     ry: 4;
   }
 
   :host([theme~='lumo']) .hour-hand,
-  :host([theme~='lumo']) .minute-hand {
+  :host([theme~='lumo']) .minute-hand,
+  :host([data-application-theme='lumo']) .hour-hand,
+  :host([data-application-theme='lumo']) .minute-hand,
+  :host([data-inherited-theme='lumo']) .hour-hand,
+  :host([data-inherited-theme='lumo']) .minute-hand {
     stroke-linecap: round;
   }
 
-  :host([theme~='lumo']) .tick {
+  :host([theme~='lumo']) .tick,
+  :host([data-application-theme='lumo']) .tick,
+  :host([data-inherited-theme='lumo']) .tick {
     stroke-width: 1;
   }
 
-  :host([theme~='lumo']) .tick-main {
+  :host([theme~='lumo']) .tick-main,
+  :host([data-application-theme='lumo']) .tick-main,
+  :host([data-inherited-theme='lumo']) .tick-main {
     stroke-width: 1.5;
   }
 
-  :host([theme~='lumo']:focus-visible) {
+  :host([theme~='lumo']:focus-visible),
+  :host([data-application-theme='lumo']:focus-visible),
+  :host([data-inherited-theme='lumo']:focus-visible) {
     outline: 2px solid var(--lumo-primary-color, #1676f3);
     outline-offset: 2px;
   }
 
   /* Lumo Dark Mode - cooler blue-gray tones */
   :host([theme~='lumo'][theme~='dark']),
-  :host-context([theme~='dark']) :host([theme~='lumo']),
-  :host-context(html[theme~='dark']) :host([theme~='lumo']) {
+  :host([theme~='lumo'][data-dark-mode]),
+  :host([data-application-theme='lumo'][data-dark-mode]),
+  :host([data-inherited-theme='lumo'][data-dark-mode]) {
     --vaadin-clock-background: var(--lumo-contrast-10pct, #252a31);
     --vaadin-clock-face-color: var(--lumo-base-color, #1a1f26);
     --vaadin-clock-inner-face-color: var(--lumo-base-color, #1a1f26);
@@ -272,7 +300,9 @@ export const clockStyles = css`
   }
 
   :host([theme~='lumo'][theme~='dark']) .clock-container,
-  :host-context([theme~='dark']) :host([theme~='lumo']) .clock-container {
+  :host([theme~='lumo'][data-dark-mode]) .clock-container,
+  :host([data-application-theme='lumo'][data-dark-mode]) .clock-container,
+  :host([data-inherited-theme='lumo'][data-dark-mode]) .clock-container {
     box-shadow:
       0 2px 8px rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -281,8 +311,11 @@ export const clockStyles = css`
   /* ========================================
    * Aura Theme Variant
    * Refined, professional appearance using Aura design tokens
+   * Applied via theme attribute or inherited from document
    * ======================================== */
-  :host([theme~='aura']) {
+  :host([theme~='aura']),
+  :host([data-application-theme='aura']),
+  :host([data-inherited-theme='aura']) {
     --vaadin-clock-background: var(--aura-background-color, #fafafa);
     --vaadin-clock-face-color: var(--aura-background-color, #ffffff);
     --vaadin-clock-inner-face-color: var(--aura-background-color, #ffffff);
@@ -296,44 +329,63 @@ export const clockStyles = css`
     --vaadin-clock-label-color: var(--aura-secondary-text-color, #4a4a4a);
   }
 
-  :host([theme~='aura']) .clock-container {
+  :host([theme~='aura']) .clock-container,
+  :host([data-application-theme='aura']) .clock-container,
+  :host([data-inherited-theme='aura']) .clock-container {
     border-radius: var(--aura-base-radius, 4px);
     border: 1px solid var(--aura-border-color, #e0e0e0);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
-  :host([theme~='aura']) .clock-face {
+  :host([theme~='aura']) .clock-face,
+  :host([data-application-theme='aura']) .clock-face,
+  :host([data-inherited-theme='aura']) .clock-face {
     stroke-width: 0.5;
   }
 
-  :host([theme~='aura']) .clock-inner-face {
+  :host([theme~='aura']) .clock-inner-face,
+  :host([data-application-theme='aura']) .clock-inner-face,
+  :host([data-inherited-theme='aura']) .clock-inner-face {
     rx: 2;
     ry: 2;
   }
 
   :host([theme~='aura']) .hour-hand,
   :host([theme~='aura']) .minute-hand,
-  :host([theme~='aura']) .second-hand {
+  :host([theme~='aura']) .second-hand,
+  :host([data-application-theme='aura']) .hour-hand,
+  :host([data-application-theme='aura']) .minute-hand,
+  :host([data-application-theme='aura']) .second-hand,
+  :host([data-inherited-theme='aura']) .hour-hand,
+  :host([data-inherited-theme='aura']) .minute-hand,
+  :host([data-inherited-theme='aura']) .second-hand {
     stroke-linecap: round;
   }
 
-  :host([theme~='aura']) .tick {
+  :host([theme~='aura']) .tick,
+  :host([data-application-theme='aura']) .tick,
+  :host([data-inherited-theme='aura']) .tick {
     stroke-width: 1;
   }
 
-  :host([theme~='aura']) .tick-main {
+  :host([theme~='aura']) .tick-main,
+  :host([data-application-theme='aura']) .tick-main,
+  :host([data-inherited-theme='aura']) .tick-main {
     stroke-width: 2;
   }
 
-  :host([theme~='aura']:focus-visible) {
+  :host([theme~='aura']:focus-visible),
+  :host([data-application-theme='aura']:focus-visible),
+  :host([data-inherited-theme='aura']:focus-visible) {
     outline: 2px solid var(--aura-accent-color, #0066cc);
     outline-offset: 2px;
   }
 
   /* Aura Dark Mode - warmer neutral tones */
   :host([theme~='aura'][theme~='dark']),
-  :host-context([theme~='dark']) :host([theme~='aura']),
-  :host-context(html[theme~='dark']) :host([theme~='aura']) {
+  :host([theme~='aura'][data-dark-mode]),
+  :host([data-application-theme='aura'][data-dark-mode]),
+  :host([data-inherited-theme='aura'][data-dark-mode]) {
     --vaadin-clock-background: var(--aura-background-color-dark, #1f1e1c);
     --vaadin-clock-face-color: var(--aura-background-color-dark, #2a2825);
     --vaadin-clock-inner-face-color: var(--aura-background-color-dark, #2a2825);
@@ -346,7 +398,9 @@ export const clockStyles = css`
   }
 
   :host([theme~='aura'][theme~='dark']) .clock-container,
-  :host-context([theme~='dark']) :host([theme~='aura']) .clock-container {
+  :host([theme~='aura'][data-dark-mode]) .clock-container,
+  :host([data-application-theme='aura'][data-dark-mode]) .clock-container,
+  :host([data-inherited-theme='aura'][data-dark-mode]) .clock-container {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
     border-color: #4a4640;
   }
