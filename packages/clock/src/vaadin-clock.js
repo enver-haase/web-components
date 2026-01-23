@@ -274,7 +274,6 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
 
   constructor() {
     super();
-    this._boundAnimate = this._animate.bind(this);
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
@@ -480,7 +479,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
       <!-- Sun icon (AM) - 8-ray sun -->
       <g class="sun-icon ${isAM ? 'active' : ''} ${clickable}"
         @click=${isInteractive ? () => this._toggleAmPm(true) : null}
-        transform="translate(18, 75)">
+        transform="translate(35, 68)">
         <circle cx="0" cy="0" r="3" />
         ${[0, 45, 90, 135, 180, 225, 270, 315].map(
           (angle) => svg`
@@ -495,7 +494,7 @@ class Clock extends ThemableMixin(ElementMixin(PolylitMixin(LitElement))) {
       <!-- Moon icon (PM) - crescent moon -->
       <g class="moon-icon ${!isAM ? 'active' : ''} ${clickable}"
         @click=${isInteractive ? () => this._toggleAmPm(false) : null}
-        transform="translate(82, 75)">
+        transform="translate(65, 68)">
         <path d="M-3,-5 A6,6 0 1,1 -3,5 A4,4 0 1,0 -3,-5" />
       </g>
     `;
